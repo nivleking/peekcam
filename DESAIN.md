@@ -1,6 +1,6 @@
 # PeekCam (clone Hand Mirror), DESAIN
 
-Status: **Tahap 1 langkah 1–5 dikodekan (2026-10-30)**, nama PeekCam dan hotkey ⌃⇧M dipakai sesuai usulan. Belum diuji dengan kamera nyata dan RAM belum diukur. Tahap 2–3 belum.
+Status: **Tahap 1 langkah 1–5 dikodekan (2026-10-30)**, nama PeekCam dan hotkey ⌃⇧M dipakai sesuai usulan. Tes 17/17 lulus, app terbangun dan terpasang di ~/Applications (2026-11-03). RAM idle terukur **9,5 MB** (target <12 MB). Preview kamera tampil dengan benar (2026-11-03). RAM saat preview terbuka **±50 MB** (target <40 MB, belum tercapai; puncak ±150-165 MB sesaat saat kamera start). Setelah preview ditutup **±35 MB** (dari 56 MB sebelum `malloc_zone_pressure_relief` ditambahkan di `CameraSession.stop`); sisanya ±50 ribu objek kecil milik framework AVFoundation/CoreMedia, sebagian besar sudah terkompres. Tidak bisa turun ke 9,5 MB (itu angka sebelum kamera pernah dibuka). Snap (Tahap 2) diuji 2026-11-03: PNG 1920x1080 tersimpan di ~/Pictures/PeekCam, dan tempel (⌘V) hasil snap dari clipboard berhasil. Jendela lepas (detach) diuji 2026-11-03: tampil sebagai jendela mengambang di depan app lain dan snap dari jendela itu bekerja. Rasio tetap dan posisi diingat belum diverifikasi.
 Folder: `~/Documents/dev-lab/apps/rea-work/peekcam`. Nama sementara "PeekCam" (bisa diganti).
 Analisis aslinya: `docs/ANALISIS-HANDMIRROR.md`.
 
@@ -70,3 +70,14 @@ Kelvin jalankan sendiri: `tccutil reset Camera dev.kelvin.PeekCam`.
 1. Nama "PeekCam" oke? (alternatif: "FaceCheck", "Mirrorlet")
 2. Hotkey ⌃⇧M oke?
 3. Tahap 3 mana yang mau dibuat?
+
+## Tahap 3 (dikodekan 2026-11-03, belum dicoba Kelvin)
+
+- **Lighting** (menu): bingkai putih tebal 12% di sekeliling gambar (`LightingFrame`), `lighting` di settings.json.
+- **Mic Check** (menu): meter 90 px di kiri bawah preview, `AVCaptureAudioDataOutput` hanya saat dinyalakan, hanya level yang dihitung (`AudioLevel`, dBFS -80...0), tidak ada audio yang disimpan. Minta izin mikrofon sekali. `micCheck` di settings.json.
+- **Launch at Login** (menu): `SMAppService.mainApp`.
+- Tes: 26 lulus (AudioLevel, LightingFrame, settings baru).
+
+## Integrasi ClipText
+
+Hapus item *files* di popup ClipText (⌥⌫), atau Clear History (⌘⌥⌫) juga memindahkan file snap ke **Trash** (bisa dikembalikan), hanya bila file ada di folder `trashLinkedFilesIn` (default `~/Pictures/PeekCam`, di settings.json ClipText; kosongkan untuk mematikan). Batas otomatis (jumlah item, umur) tidak menyentuh file.

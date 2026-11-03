@@ -76,6 +76,17 @@ public final class PeekCamService: NSObject {
         window.close()
     }
 
+    /// The meter only runs with the setting on and the permission granted.
+    private var micActive: Bool {
+        settings.micCheck && AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+    }
+
+    private func applyPreviewOptions() {
+        content.lighting = settings.lighting
+        content.showsMeter = micActive
+        camera.onLevel = { [weak self] level in self?.content.setLevel(level) }
+    }
+
     private func previewClosed() {
         // NSPopover may report its close after the window already took the picture over.
         if !handingOver && !isPreviewVisible { camera.stop() }
@@ -100,8 +111,9 @@ public final class PeekCamService: NSObject {
             return
         }
         let size = settings.previewSize
+        applyPreviewOptions()
         preview.show(content, size: NSSize(width: size.width, height: size.height), from: button)
-        camera.start(camera: chosen, mirror: settings.mirror)
+        camera.start(camera: chosen, mirror: settings.mirror, microphone: micActive)
     }
 
     /// Moves the running preview between the menu bar popover and the floating window.
@@ -199,6 +211,11 @@ public final class PeekCamService: NSObject {
         menu.addItem(withTitle: "Size", action: nil, keyEquivalent: "").submenu = sizeMenu
 
         add(to: menu, "Mirror", #selector(toggleMirror)).state = settings.mirror ? .on : .off
+        add(to: menu, "Lighting", #selector(toggleLighting)).state = settings.lighting ? .on : .off
+        add(to: menu, "Mic Check", #selector(toggleMicCheck)).state = settings.micCheck ? .on : .off
+        let login = add(to: menu, LaunchAtLogin.needsApproval ? "Launch at Login (approve in System Settings)" : "Launch at Login",
+                        #selector(toggleLaunchAtLogin))
+        login.state = LaunchAtLogin.isEnabled ? .on : .off
         menu.addItem(.separator())
         add(to: menu, "Open Snaps Folder", #selector(openSnapsFolder))
         add(to: menu, "Edit settings.json…", #selector(openSettingsFile))
@@ -248,11 +265,44 @@ public final class PeekCamService: NSObject {
         camera.setMirror(settings.mirror)
     }
 
+    @objc private func toggleLighting() {
+        update { $0.lighting.toggle() }
+        content.lighting = settings.lighting
+    }
+
+    @objc private func toggleMicCheck() {
+        if settings.micCheck {
+            update { $0.micCheck = false }
+            restartIfVisible()
+            return
+        }
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            update { $0.micCheck = true }
+            restartIfVisible()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
+                guard granted else { return }
+                Task { @MainActor in
+                    self.update { $0.micCheck = true }
+                    self.restartIfVisible()
+                }
+            }
+        default:
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
+        }
+    }
+
+    @objc private func toggleLaunchAtLogin() {
+        LaunchAtLogin.set(!LaunchAtLogin.isEnabled)
+    }
+
     private func restartIfVisible() {
         if window.isShown {
             // Stay detached: new camera and shape in place.
             if let chosen = CameraPicker.choose(preferred: settings.cameraID, from: AVCameraSession.cameras) {
-                camera.start(camera: chosen, mirror: settings.mirror)
+                applyPreviewOptions()
+                camera.start(camera: chosen, mirror: settings.mirror, microphone: micActive)
             }
             handingOver = true
             window.close()

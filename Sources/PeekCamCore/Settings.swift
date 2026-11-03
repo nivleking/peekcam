@@ -79,6 +79,10 @@ public struct AppSettings: Codable, Equatable {
     public var copySnapToClipboard = true
     /// Last frame of the detached window as [x, y, width, height]. Nil = never detached.
     public var detachedFrame: [Double]?
+    /// A bright frame around the picture, to light the face with the screen.
+    public var lighting = false
+    /// Shows a microphone level meter on the preview. Asks for microphone access once.
+    public var micCheck = false
 
     public init() {}
 
@@ -93,6 +97,8 @@ public struct AppSettings: Codable, Equatable {
         saveDirectory = try c.decodeIfPresent(String.self, forKey: .saveDirectory) ?? d.saveDirectory
         copySnapToClipboard = try c.decodeIfPresent(Bool.self, forKey: .copySnapToClipboard) ?? d.copySnapToClipboard
         detachedFrame = try? c.decodeIfPresent([Double].self, forKey: .detachedFrame)
+        lighting = try c.decodeIfPresent(Bool.self, forKey: .lighting) ?? d.lighting
+        micCheck = try c.decodeIfPresent(Bool.self, forKey: .micCheck) ?? d.micCheck
     }
 
     public var hotKeySpec: HotKeySpec {

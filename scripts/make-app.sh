@@ -33,6 +33,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
   <key>NSCameraUsageDescription</key><string>PeekCam shows your camera so you can check how you look before a call.</string>
+  <key>NSMicrophoneUsageDescription</key><string>PeekCam shows a level meter so you can check your microphone. No audio is recorded.</string>
   <key>NSHumanReadableCopyright</key><string>PeekCam</string>
 </dict>
 </plist>

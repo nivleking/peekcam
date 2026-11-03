@@ -144,3 +144,64 @@ struct WindowPlacementTests {
         #expect(WindowPlacement.frame(saved: gone, defaultWidth: 360, aspect: .wide, visible: screen).maxX == 1420)
     }
 }
+
+struct AudioLevelTests {
+    @Test func silenceIsZeroAndFullScaleIsOne() {
+        #expect(AudioLevel.meter(rms: 0) == 0)
+        #expect(AudioLevel.meter(rms: 1) == 1)
+    }
+
+    @Test func quietSpeechIsInTheMiddle() {
+        // 0.01 amplitude = -40 dBFS, which is the middle of the -80...0 range.
+        let level = AudioLevel.meter(rms: 0.01)
+        #expect(abs(level - 0.5) < 0.01)
+    }
+
+    @Test func clampsOutOfRangeValues() {
+        #expect(AudioLevel.meter(rms: 5) == 1)
+        #expect(AudioLevel.meter(rms: 1e-9) == 0)
+        #expect(AudioLevel.meter(rms: -1) == 0)
+    }
+
+    @Test func rmsOfSamples() {
+        #expect(AudioLevel.rms(of: []) == 0)
+        #expect(abs(AudioLevel.rms(of: [0.5, -0.5, 0.5, -0.5]) - 0.5) < 0.0001)
+    }
+
+    @Test func smoothingFallsSlowlyAndRisesFast() {
+        #expect(AudioLevel.smoothed(previous: 0.2, new: 0.8) == 0.8)
+        #expect(AudioLevel.smoothed(previous: 0.8, new: 0.0) > 0.5)
+    }
+}
+
+struct LightingFrameTests {
+    @Test func insetKeepsAspectAndLeavesAFrame() {
+        let bounds = CGRect(x: 0, y: 0, width: 480, height: 270)
+        let inner = LightingFrame.cameraRect(in: bounds, thickness: 0.12)
+        #expect(inner.midX == bounds.midX && inner.midY == bounds.midY)
+        #expect(abs(inner.width / inner.height - 480.0 / 270.0) < 0.01)
+        #expect(inner.width < bounds.width)
+    }
+
+    @Test func zeroThicknessIsFullBounds() {
+        let bounds = CGRect(x: 0, y: 0, width: 320, height: 180)
+        #expect(LightingFrame.cameraRect(in: bounds, thickness: 0) == bounds)
+    }
+}
+
+struct Stage3SettingsTests {
+    @Test func defaultsAreOff() {
+        let s = AppSettings()
+        #expect(!s.lighting && !s.micCheck)
+    }
+
+    @Test func roundTripAndOldFilesStillLoad() throws {
+        var s = AppSettings()
+        s.lighting = true
+        s.micCheck = true
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(s))
+        #expect(decoded == s)
+        let old = try JSONDecoder().decode(AppSettings.self, from: Data(#"{"mirror": false}"#.utf8))
+        #expect(!old.lighting && !old.micCheck)
+    }
+}
