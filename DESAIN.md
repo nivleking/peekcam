@@ -71,7 +71,7 @@ Kelvin jalankan sendiri: `tccutil reset Camera dev.kelvin.PeekCam`.
 2. Hotkey ⌃⇧M oke?
 3. Tahap 3 mana yang mau dibuat?
 
-## Tahap 3 (dikodekan 2026-11-03, belum dicoba Kelvin)
+## Tahap 3 (dikodekan 2026-11-03, dicoba dan diterima Kelvin 2026-11-04)
 
 - **Lighting** (menu): bingkai putih tebal 12% di sekeliling gambar (`LightingFrame`), `lighting` di settings.json.
 - **Mic Check** (menu): meter 90 px di kiri bawah preview, `AVCaptureAudioDataOutput` hanya saat dinyalakan, hanya level yang dihitung (`AudioLevel`, dBFS -80...0), tidak ada audio yang disimpan. Minta izin mikrofon sekali. `micCheck` di settings.json.
