@@ -63,6 +63,23 @@ public final class PeekCamService: NSObject {
     /// True when another app already owns the shortcut.
     public var hotKeyFailed: Bool { started && hotKey == nil }
 
+    /// Changes the shortcut (text like "ctrl+shift+M"). Keeps the old one and returns false when the text is
+    /// not a shortcut or another app already owns the new one.
+    @discardableResult
+    public func updateHotKey(_ text: String) -> Bool {
+        guard HotKeySpec(text) != nil else { return false }
+        let old = settings.hotKey
+        settings.hotKey = text
+        registerHotKey()
+        if hotKeyFailed {
+            settings.hotKey = old
+            registerHotKey()
+            return false
+        }
+        try? settings.save(to: AppPaths.dataDirectory)
+        return true
+    }
+
     public func togglePreview(from button: NSStatusBarButton? = nil) {
         if isPreviewVisible {
             closePreview()
