@@ -18,6 +18,16 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 cp "$BIN" "$APP/Contents/MacOS/PeekCam"
 
+# App icon: every size macOS asks for, from one 1024 px PNG (sips and iconutil ship with macOS).
+[[ -f Resources/AppIcon-1024.png ]] || swift scripts/make-icon.swift Resources/AppIcon-1024.png
+ICONSET="build/AppIcon.iconset"
+rm -rf "$ICONSET" && mkdir -p "$ICONSET" "$APP/Contents/Resources"
+for size in 16 32 128 256 512; do
+  sips -z $size $size Resources/AppIcon-1024.png --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
+  sips -z $((size * 2)) $((size * 2)) Resources/AppIcon-1024.png --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+done
+iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -27,6 +37,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleIdentifier</key><string>dev.kelvin.PeekCam</string>
   <key>CFBundleName</key><string>PeekCam</string>
   <key>CFBundleExecutable</key><string>PeekCam</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>${VERSION}</string>
   <key>CFBundleVersion</key><string>1</string>
